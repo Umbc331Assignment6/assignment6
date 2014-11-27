@@ -31,13 +31,10 @@ func main() {
 	if e != nil {
         fmt.Println(e)
     }
-    
 	fmt.Printf("Arg1 %d, Arg2 %d\n", arg1, arg2)
 	
-	fmt.Printf("Hello world\n")
-	r := image.Rect(20.0, 10.0, 50.0, 5.0)
-	
-	
+	r := image.Rect(0, 255, 255, 0)
+	//Create file
 	f, err := os.Create("x.png")
     if err != nil {
 		check(err)
@@ -47,11 +44,9 @@ func main() {
 		for x := 0; x < 256; x++ {
 			if x % 2 == 0 {
 				m.Set(x,y, color.Black)
-				continue
+			} else {
+				m.Set(x,y, color.White)
 			}
-
-			m.Set(x,y, color.White)
-
 		} 
 	}
 	
@@ -60,18 +55,9 @@ func main() {
 	os.Exit(1)
 	}
 	
-	
-	//d1 := []byte("hello\ngo\n")
-	//err := ioutil.WriteFile("test.txt", d1, 0644)
-    //check(err)
-	
-	//f, err := os.Create("test1.png")
-	//convertToPNG(f,r)
-	//image/png.Encode(f,r)
-	
+
 	// Dx and Dy return a rectangle's width and height.
 	fmt.Println(r.Dx(), r.Dy(), image.Pt(0, 0).In(r)) // prints 3 4 false
-	
 	
 	//err := ioutil.WriteFile("test.txt", r, 0644)
 	//check(err)
