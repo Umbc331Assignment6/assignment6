@@ -19,13 +19,13 @@ func mandlebrot(c complex128) {
 	i := uint(0)
 	x, y := real(c), imag(c)
 	for (i < 1000) {
-		z = z*z + c
-			if x*x + y*y < 4 {
-				fmt.Println("escapes!\n")
-				return true
-			}
-		i++
-		x, y = real(z), imag(c)
+	z = z*z + c
+	if x*x + y*y < 4 {
+		fmt.Println("escapes!\n")
+		return true
+	}
+	i++
+	x, y = real(z), imag(c)
 	}
 	return false
 }
