@@ -42,11 +42,19 @@ func normal2imageCoordinate(x, y int) (int,int) {
 }
 
 func scale_pixel(x, y int) (float64,float64) {
-	newx := float64(x)/(float64(maxX)) - 1.0
-	newy := float64(y)/(float64(maxY)) - 1.0
-	fmt.Printf("X Value %f\n", newx)
-	fmt.Printf("Y Value %f\n", newy)
+	newx := float64(x)/(float64(maxX)) - 0.0
+	newy := float64(y)/(float64(maxY)) - 0.0
+	//fmt.Printf("X Value %f\n", newx)
+	//fmt.Printf("Y Value %f\n", newy)
 	return newx, newy
+}
+
+func unscale_pixel(x, y float64) (int,int) {
+	newx := float64(x)*(float64(maxX)) + 1.0
+	newy := float64(y)*(float64(maxY)) + 1.0
+	//fmt.Printf("X Value %f\n", newx)
+	//fmt.Printf("Y Value %f\n", newy)
+	return int(newx), int(newy)
 }
 
 
