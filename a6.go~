@@ -20,13 +20,15 @@ func check(e error) {
 func mandlebrot(c complex128,iterations int) bool{
 	z := c
 	i := int(0)
-	x, y := real(c), imag(c)
+	//x, y := real(c), imag(c)
+	//fmt.Printf("mandlebrotX Value %f\n", x)
 	for (i < iterations) {
 		z = z*z + c
-			if x*x + y*y < 4 {
-				fmt.Println("escapes!\n")
-				return true
-			}
+		x, y := real(z), imag(z)
+		if x*x + y*y < 4 {
+			fmt.Println("\nescapes!\n")
+			return true
+		}
 		i++
 		x, y = real(z), imag(c)
 	}
@@ -40,9 +42,10 @@ func normal2imageCoordinate(x, y int) (int,int) {
 }
 
 func scale_pixel(x, y int) (float64,float64) {
-	newx := float64(x)/(float64(maxX)) - 2.0
+	newx := float64(x)/(float64(maxX)) - 1.0
 	newy := float64(y)/(float64(maxY)) - 1.0
-	fmt.Printf("Value %f", newx)
+	fmt.Printf("X Value %f\n", newx)
+	fmt.Printf("Y Value %f\n", newy)
 	return newx, newy
 }
 
