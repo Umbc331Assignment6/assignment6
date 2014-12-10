@@ -15,33 +15,27 @@ type point struct {
 	xf, yf float64
 	xi, yi int
 }
-//TODO gen_points is wrong outer loop doesnt ever finsh
-//		if the first argument is greater than 2
-//		Once it hits 4 it starts to finsh less times
+
+
 /*
  * Generates channel to emit list of point structs
  * (stage 1)
  */
 func gen_points(wg *sync.WaitGroup) (<-chan point) {
-	//fmt.Printf("MaxY: %d MaxX: %d\n", maxY, maxX)
 	//counter := 0
 	out := make(chan point)
 	go func(wg *sync.WaitGroup) {
 		for y := -maxY/2; y < maxY; y++ {
-			//fmt.Printf("Outer loop\n")
 			for x := -maxX/2; x < maxX; x++ {
 				xx, yy := scale_pixel(x, y)
 				//fmt.Println(counter)
-				//fmt.Printf("Inneer loop\n")
 				//counter++
-				out <- point{xf: xx, yf: yy, xi: x, yi: y}
-				
+				out <- point{xf: xx, yf: yy, xi: x, yi: y}	
 			}//end for
 		}//end for
-		close(out)
-		
+		close(out)	
 	}(wg)//end go func
-	wg.Done()
+	wg.Done()	//This thread is finished
 	return out
 }
 
@@ -50,7 +44,7 @@ func gen_points(wg *sync.WaitGroup) (<-chan point) {
  * (stage 2)
  */
 func mandlebrot_routine(wg *sync.WaitGroup, in <-chan point,iterations int, m *image.NRGBA) {
-	wg.Add(1)
+	wg.Add(1)	//increment the number of outstanding threads
 	go func(wg *sync.WaitGroup) {
 		for n := range in {
 			if mandlebrot( complex(n.xf,n.yf), iterations) {
@@ -63,7 +57,7 @@ func mandlebrot_routine(wg *sync.WaitGroup, in <-chan point,iterations int, m *i
 				m.Set(newx,newy, color.White)
 			}
 		}//end for loop
-	wg.Done()
+	wg.Done()	//This thread is finished
 	}(wg)//end go func
 	
 }
@@ -139,14 +133,16 @@ func main() {
 	check(err)	//Catch any errors
 
     m := image.NewNRGBA(r)	//Put the rectangle into a new image object
-	/* Parrellized way (doesnt work)*/
+	/* Parrellized way (works but still not right)*/
 	//########################
 	//gen_points()
 	var wg sync.WaitGroup
-	wg.Add(1)
+	wg.Add(1)	//increment number of outstanding working threads
 	the_points := gen_points(&wg)
 	wg.Wait()	//wait group waits for all threads to finsh before continueing
 	fmt.Println("Points structs created")
+	mandlebrot_routine(&wg,the_points, arg2, m)	//TODO:	each of these is manully
+	mandlebrot_routine(&wg,the_points, arg2, m)	//			launched thread
 	mandlebrot_routine(&wg,the_points, arg2, m)
 	mandlebrot_routine(&wg,the_points, arg2, m)
 	mandlebrot_routine(&wg,the_points, arg2, m)
@@ -158,9 +154,7 @@ func main() {
 	mandlebrot_routine(&wg,the_points, arg2, m)
 	mandlebrot_routine(&wg,the_points, arg2, m)
 	mandlebrot_routine(&wg,the_points, arg2, m)
-	mandlebrot_routine(&wg,the_points, arg2, m)
-	mandlebrot_routine(&wg,the_points, arg2, m)
-	wg.Wait()
+	wg.Wait()	//Wait for each working thread to finsh
 	//########################
 	/* Sequenctial way (works)*/
 	/*/////////////////////////////////////////////////////////////////
