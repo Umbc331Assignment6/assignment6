@@ -2,6 +2,7 @@ package main
 
 import ("os"
 		"fmt"
+		"sync"
 		"image"
 		"image/color"
 		"image/png"
@@ -21,24 +22,26 @@ type point struct {
  * Generates channel to emit list of point structs
  * (stage 1)
  */
-func gen_points() <-chan point {
-	fmt.Printf("MaxY: %d MaxX: %d\n", maxY, maxX)
+func gen_points(wg *sync.WaitGroup) (<-chan point) {
+	//fmt.Printf("MaxY: %d MaxX: %d\n", maxY, maxX)
+	//counter := 0
 	out := make(chan point)
-	go func() {
-		for y := -maxY/2; y < maxY; y++ {//TODO out for loop only executes oncefor larger inputs
-			fmt.Printf("Outer loop\n")
-			fmt.Println(y)
+	go func(wg *sync.WaitGroup) {
+		for y := -maxY/2; y < maxY; y++ {
+			//fmt.Printf("Outer loop\n")
 			for x := -maxX/2; x < maxX; x++ {
 				xx, yy := scale_pixel(x, y)
-				p := point{xf: xx, yf: yy, xi: x, yi: y}
-				//fmt.Println(p.yf, p.yi)//TODO doesnt change????
-				//fmt.Println(p.xf, p.xi)
-				//fmt.Printf("MaxY: %d MaxX: %d\n", maxY, maxX)
-				out <- p
+				//fmt.Println(counter)
+				//fmt.Printf("Inneer loop\n")
+				//counter++
+				out <- point{xf: xx, yf: yy, xi: x, yi: y}
+				
 			}//end for
 		}//end for
 		close(out)
-	}()//end go func
+		
+	}(wg)//end go func
+	wg.Done()
 	return out
 }
 
@@ -46,8 +49,9 @@ func gen_points() <-chan point {
  * Calculates if point is in the mandlebrot set
  * (stage 2)
  */
-func mandlebrot_routine(in <-chan point,iterations int, m *image.NRGBA) {
-	go func() {
+func mandlebrot_routine(wg *sync.WaitGroup, in <-chan point,iterations int, m *image.NRGBA) {
+	wg.Add(1)
+	go func(wg *sync.WaitGroup) {
 		for n := range in {
 			if mandlebrot( complex(n.xf,n.yf), iterations) {
 				newx, newy := normal2imageCoordinate(n.xi,n.yi)
@@ -59,8 +63,9 @@ func mandlebrot_routine(in <-chan point,iterations int, m *image.NRGBA) {
 				m.Set(newx,newy, color.White)
 			}
 		}//end for loop
-
-	}()//end go func 
+	wg.Done()
+	}(wg)//end go func
+	
 }
 
 /*
@@ -105,17 +110,13 @@ func normal2imageCoordinate(x, y int) (int, int) {
  */
 func scale_pixel(x, y int) (float64, float64) {
 	newx := float64(x)/(float64(maxX)/3) - 2.0
-	newy := float64(y)/(float64(maxY)/2) - 0.0
-	//fmt.Printf("X Value %f\n", newx)
-	//fmt.Printf("Y Value %f\n", newy)
+	newy := float64(y)/(float64(maxY)/2) - 0.0       
 	return newx, newy
 }
 
 func unscale_pixel(x, y float64) (int,int) {
 	newx := float64(x)*(float64(maxX)*3) + 2.0
 	newy := float64(y)*(float64(maxY)*2) + 0.0
-	//fmt.Printf("X Value %f\n", newx)
-	//fmt.Printf("Y Value %f\n", newy)
 	return int(newx), int(newy)
 }
 
@@ -125,7 +126,6 @@ func main() {
 	arg1, e := strconv.Atoi(os.Args[1])
 	check(e) //check if an error happened
 	maxY = arg1 * 2	//garuntees you have plus and minus 1*(arg1) from the center
-	
 	maxX = arg1 * 3 //garuntees you have plus and minus 1.5*(arg1) from the center
 	arg2, e := strconv.Atoi(os.Args[2])
 	check(e) //check if an error happened
@@ -141,11 +141,30 @@ func main() {
     m := image.NewNRGBA(r)	//Put the rectangle into a new image object
 	/* Parrellized way (doesnt work)*/
 	//########################
-	the_points := gen_points()
-	mandlebrot_routine(the_points, arg2, m)
+	//gen_points()
+	var wg sync.WaitGroup
+	wg.Add(1)
+	the_points := gen_points(&wg)
+	wg.Wait()	//wait group waits for all threads to finsh before continueing
+	fmt.Println("Points structs created")
+	mandlebrot_routine(&wg,the_points, arg2, m)
+	mandlebrot_routine(&wg,the_points, arg2, m)
+	mandlebrot_routine(&wg,the_points, arg2, m)
+	mandlebrot_routine(&wg,the_points, arg2, m)
+	mandlebrot_routine(&wg,the_points, arg2, m)
+	mandlebrot_routine(&wg,the_points, arg2, m)
+	mandlebrot_routine(&wg,the_points, arg2, m)
+	mandlebrot_routine(&wg,the_points, arg2, m)
+	mandlebrot_routine(&wg,the_points, arg2, m)
+	mandlebrot_routine(&wg,the_points, arg2, m)
+	mandlebrot_routine(&wg,the_points, arg2, m)
+	mandlebrot_routine(&wg,the_points, arg2, m)
+	mandlebrot_routine(&wg,the_points, arg2, m)
+	wg.Wait()
 	//########################
 	/* Sequenctial way (works)*/
 	/*/////////////////////////////////////////////////////////////////
+	counter := 0
 	for y := -maxY/2; y < maxY; y++ {
 		for x := -maxX/2; x < maxX; x++ {
 		
@@ -158,7 +177,8 @@ func main() {
 				newx, newy := normal2imageCoordinate(x,y)
 				m.Set(newx,newy, color.White)
 			}
-						
+			//fmt.Println(counter)
+			counter++			
 		}//end x for 
 	}//end y for
 	*//////////////////////////////////////////////////////////////////
